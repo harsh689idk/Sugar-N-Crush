@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sugar N Crush - Bakery Management</title>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #FFD700;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #222;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #FFD700;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #FFD700;
+        }
+        .header p {
+            color: #FFF;
+        }
+        .menu {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .menu button {
+            flex: 1;
+            max-width: 200px;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFD700;
+            color: #000;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.5);
+        }
+        .menu button:hover {
+            background-color: #e5c100;
+        }
+        .form-container {
+            display: none;
+            margin-top: 20px;
+        }
+        .form-container.active {
+            display: block;
+        }
+        .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #FFD700;
+        }
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #FFD700;
+            border-radius: 5px;
+            background-color: #333;
+            color: #FFD700;
+        }
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFD700;
+            color: #000;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .form-container button:hover {
+            background-color: #e5c100;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #333;
+            border: 1px solid #FFD700;
+            border-radius: 5px;
+            color: #FFD700;
+        }
+        @media (max-width: 600px) {
+            .menu {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .menu button {
+                max-width: 100%;
+                margin-bottom: 10px;
+            }
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            .form-container label {
+                font-size: 14px;
+            }
+            .form-container input {
+                font-size: 14px;
+            }
+            .form-container button {
+                font-size: 14px;
+                padding: 8px;
+            }
+            .output {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sugar N Crush</h1>
+            <p>Manage your bakery data with ease!</p>
+        </div>
+
+        <div class="menu">
+            <button onclick="selectCategory('patties')">Manage Patties</button>
+            <button onclick="selectCategory('cakes')">Manage Cakes</button>
+            <button onclick="selectCategory('pastries')">Manage Pastries</button>
+            <button onclick="selectCategory('breads')">Manage Breads</button>
+            <button onclick="selectCategory('buns')">Manage Buns</button>
+            <button onclick="selectCategory('biscuits')">Manage Biscuits</button>
+        </div>
+
+        <div class="form-container" id="form-container">
+            <h3 id="form-title"></h3>
+            <label for="date">Enter the date of the month (1-31):</label>
+            <input type="number" id="date" min="1" max="31">
+
+            <label for="count">Enter the number sold:</label>
+            <input type="number" id="count" min="0">
+
+            <button onclick="saveData()">Save Data</button>
+        </div>
+
+        <div class="form-container" id="check-container">
+            <h3>Check Data</h3>
+            <label for="check-date">Enter the date to check data (1-31):</label>
+            <input type="number" id="check-date" min="1" max="31">
+
+            <button onclick="checkData()">Check Data</button>
+        </div>
+
+        <div class="form-container" id="delete-container">
+            <h3>Delete Data</h3>
+            <label for="delete-date">Enter the date to delete data (1-31):</label>
+            <input type="number" id="delete-date" min="1" max="31">
+
+            <button onclick="deleteData()">Delete Data</button>
+            <button onclick="deleteAllData()" style="background-color: #b22222; margin-top: 10px;">Delete All Data</button>
+        </div>
+
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        const categories = ['patties', 'cakes', 'pastries', 'breads', 'buns', 'biscuits'];
+        const data = {};
+
+        categories.forEach(category => {
+            data[category] = JSON.parse(localStorage.getItem(`${category}Data`)) || new Array(31).fill(0);
+        });
+
+        let currentCategory = '';
+
+        function saveDataToLocalStorage(category) {
+            localStorage.setItem(`${category}Data`, JSON.stringify(data[category]));
+        }
+
+        function selectCategory(category) {
+            currentCategory = category;
+            document.getElementById("form-title").innerText = `Manage ${category}`;
+            document.getElementById("form-container").classList.add("active");
+            document.getElementById("check-container").classList.add("active");
+            document.getElementById("delete-container").classList.add("active");
+            document.getElementById("output").innerText = '';
+        }
+
+        function saveData() {
+            const date = parseInt(document.getElementById("date").value);
+            const count = parseInt(document.getElementById("count").value);
+
+            if (isNaN(date) || date < 1 || date > 31) {
+                alert("Please enter a valid date between 1 and 31.");
+                return;
+            }
+
+            if (isNaN(count) || count < 0) {
+                alert("Please enter a valid non-negative number.");
+                return;
+            }
+
+            data[currentCategory][date - 1] = count;
+            saveDataToLocalStorage(currentCategory);
+
+            document.getElementById("output").innerText = `Data updated: ${count} ${currentCategory} sold on date ${date}.`;
+            document.getElementById("form-container").classList.remove("active");
+        }
+
+        function checkData() {
+            const date = parseInt(document.getElementById("check-date").value);
+
+            if (isNaN(date) || date < 1 || date > 31) {
+                alert("Please enter a valid date between 1 and 31.");
+                return;
+            }
+
+            const count = data[currentCategory][date - 1];
+            document.getElementById("output").innerText = `Data retrieved: ${count} ${currentCategory} sold on date ${date}.`;
+        }
+
+        function deleteData() {
+            const date = parseInt(document.getElementById("delete-date").value);
+
+            if (isNaN(date) || date < 1 || date > 31) {
+                alert("Please enter a valid date between 1 and 31.");
+                return;
+            }
+
+            data[currentCategory][date - 1] = 0;
+            saveDataToLocalStorage(currentCategory);
+
+            document.getElementById("output").innerText = `Data deleted for ${currentCategory} on date ${date}.`;
+        }
+
+        function deleteAllData() {
+            if (!confirm(`Are you sure you want to delete all data for ${currentCategory}?`)) {
+                return;
+            }
+
+            data[currentCategory] = new Array(31).fill(0);
+            saveDataToLocalStorage(currentCategory);
+
+            document.getElementById("output").innerText = `All data deleted for ${currentCategory}.`;
+        }
+    </script>
+</body>
+</html>
